@@ -1,3 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 *.gds filter=lfs diff=lfs merge=lfs -text
+*.spef filter=lfs diff=lfs merge=lfs -text
+*.def filter=lfs diff=lfs merge=lfs -text
+*.lef filter=lfs diff=lfs merge=lfs -text
