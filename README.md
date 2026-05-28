@@ -90,3 +90,22 @@ This is the physical and logical wrapper of the IP. It acts as the central hub, 
 **Signal Routing**: It directly wires the configuration outputs from the AXI4-Lite Slave into the FSM, and routes the memory/compute signals between the FSM, the SRAM, and the PE Array.
 
 **Data Unpacking**: It handles the continuous 64-bit data streams coming from the SRAM and unpacks them into discrete 8-bit activation and weight buses to feed the systolic rows.
+
+## Memory-Mapped Register (MAR) Map
+
+The IP is controlled via a set of 32-bit memory-mapped registers accessible over the AXI4-Lite bus.
+
+| Offset   | Register         | Access | Bit(s)  | Field          | Description |
+|----------|------------------|--------|----------|----------------|-------------|
+| `0x0000` | **CTRL**         | W      | [2]      | `CLEAR`        | Async clear for PE accumulators and FSM status. |
+|          |                  |        | [1]      | `STOP`         | Immediately halts FSM and safely drains pipeline. |
+|          |                  |        | [0]      | `START`        | Initiates the computation sequence. |
+| `0x0004` | **BASE_ADDR**    | W      | [15:0]   | `base_addr`    | 16-bit base address pointing to SRAM data start. |
+| `0x0008` | **MATRIX_SIZE**  | W      | [1:0]    | `matrix_size`  | Active row configuration (`00`: 1x4, `01`: 2x4, `10`: 3x4, `11`: 4x4). |
+| `0x000C` | **MODE**         | W      | [1:0]    | `quantization` | Precision mode (`00`: 8-bit MAC, `01`: 4-bit MAC). |
+| `0x0010` | **STATUS**       | R      | [3]      | `OVERFLOW`     | Latched high if any PE accumulator saturated. |
+|          |                  |        | [2]      | `ERROR`        | High if watchdog timeout or critical hardware fault. |
+|          |                  |        | [1]      | `BUSY`         | High while FSM is active. |
+|          |                  |        | [0]      | `DONE`         | High when computation completes and results are stored. |
+| `0x0014` | **CYCLE_COUNT**  | R      | [31:0]   | `cycle_count`  | Hardware cycle counter for performance profiling. |
+| `0x0018` | **ERROR_CODE**   | R      | [31:0]   | `error_code`   | Lower 4-bits: PE row overflow mask. `0xDEAD0001`: Watchdog timeout. |
