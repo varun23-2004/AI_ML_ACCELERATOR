@@ -38,9 +38,19 @@ an integrated dual-port SRAM for local data buffering.
 ## 4. System Architecture 
 The AI/ML Accelerator is highly modular, strictly separating the control plane (bus interfacing and state management) from the datapath (computation and memory). It uses a top-level wrapper, [accel_ip_top](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/accel_ip_top.v), to integrate five core sub-modules.
 
-**A. Top-Level Integration: [accel_ip_top](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/accel_ip_top.v)
+**A. Top-Level Integration: [accel_ip_top](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/accel_ip_top.v)**
 This is the physical and logical wrapper of the IP. It acts as the central hub, mapping external SoC signals to the internal sub-systems.
 
 Signal Routing: It directly wires the configuration outputs from the AXI4-Lite Slave into the FSM, and routes the memory/compute signals between the FSM, the SRAM, and the PE Array.
 
 Data Unpacking: It handles the continuous 64-bit data streams coming from the SRAM and unpacks them into discrete 8-bit activation and weight buses to feed the systolic rows.
+
+**B. Configuration Interface: [axi4_lite_slave](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/axi4_lite_slave.v)**
+This module acts as the bridge between the host CPU and the accelerator hardware.
+This is the entry point for the system. Before any matrix multiplication occurs, the CPU must define the base memory address, the active matrix size, and the quantization mode. The AXI Slave receives this over the AXI4-Lite bus and safely registers it for the FSM to use.
+
+Address Decoding: It decodes specific 32-bit AXI addresses to route data to the correct registers (e.g., 0x0000 for Command, 0x0004 for Base Address, 0x0008 for Matrix Size).
+
+Protocol Protection (SLVERR): It enforces hardware security by strictly delineating Read-Only and Write-Only memory spaces. If the CPU maliciously or accidentally attempts to write to the Read-Only Status register (0x0010), the module immediately traps the request and issues a Slave Error (SLVERR) response.
+
+Command Handshakes: Writing a 0x01 (START) to the Control register initiates the hardware. The module also exposes real-time flags (DONE, BUSY, ERROR, OVERFLOW) back to the CPU for polling.
