@@ -45,7 +45,7 @@ The smallest, most critical building block of the datapath. Each PE is responsib
 
 **Dynamic Precision Mode**: The multiplier physically adapts based on the pe_mode signal. It can execute standard 8-bit math, or switch to 4-bit operations to support aggressively quantized neural networks.
 
-**Saturation Logic**: It utilizes a 20-bit internal accumulator for an 8-bit multiply. If the sum exceeds the maximum 20-bit value (_(0xFFFFF)_), the hardware features a saturation clamp. Instead of wrapping around to zero (which would catastrophically invert a neural network's prediction), it locks the value at the maximum maximum limit and asserts an overfl
+**Saturation Logic**: It utilizes a 20-bit internal accumulator for an 8-bit multiply. If the sum exceeds the maximum 20-bit value (_(0xFFFFF)_), the hardware features a saturation clamp. Instead of wrapping around to zero (which would catastrophically invert a neural network's prediction), it locks the value at the maximum maximum limit and asserts an overflow flag.
 
 ### B. The Compute Fabric: [pe_array_4x4](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/pe_array_4x4.v)
 
@@ -90,8 +90,3 @@ This is the physical and logical wrapper of the IP. It acts as the central hub, 
 **Signal Routing**: It directly wires the configuration outputs from the AXI4-Lite Slave into the FSM, and routes the memory/compute signals between the FSM, the SRAM, and the PE Array.
 
 **Data Unpacking**: It handles the continuous 64-bit data streams coming from the SRAM and unpacks them into discrete 8-bit activation and weight buses to feed the systolic rows.
-
-
-
-
-ow flag.
