@@ -15,5 +15,5 @@ Design is LVS clean.
 
 Antenna Summary:
 Source: /openlane/designs/accel_ip/runs/RUN_2026.05.23_02.24.01/logs/signoff/41-arc.log
-Pin violations: 0
-Net violations: 0
+Pin violations: 559
+Net violations: 559
