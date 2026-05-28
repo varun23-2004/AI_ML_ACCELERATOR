@@ -91,7 +91,7 @@ This is the physical and logical wrapper of the IP. It acts as the central hub, 
 
 **Data Unpacking**: It handles the continuous 64-bit data streams coming from the SRAM and unpacks them into discrete 8-bit activation and weight buses to feed the systolic rows.
 
-## Memory-Mapped Register (MAR) Map
+## 5. Memory-Mapped Register (MAR) Map
 
 The IP is controlled via a set of 32-bit memory-mapped registers accessible over the AXI4-Lite bus.
 
@@ -109,3 +109,17 @@ The IP is controlled via a set of 32-bit memory-mapped registers accessible over
 |          |                  |        | [0]      | `DONE`         | High when computation completes and results are stored. |
 | `0x0014` | **CYCLE_COUNT**  | R      | [31:0]   | `cycle_count`  | Hardware cycle counter for performance profiling. |
 | `0x0018` | **ERROR_CODE**   | R      | [31:0]   | `error_code`   | Lower 4-bits: PE row overflow mask. `0xDEAD0001`: Watchdog timeout. |
+
+## 6. Physical Design (PPA Metrics)
+
+The IP was synthesized, placed, and routed using the OpenLane flow, achieving a clean LVS and DRC signoff.
+
+| Metric                  | Value |
+|--------------------------|-------|
+| **Technology Node**      | SkyWater 130nm (Sky130A) |
+| **Clock Frequency**      | 66.67 MHz (15ns Period) |
+| **Core Area**            | 2.31 mm² |
+| **Final Utilization**    | 35.74% |
+| **Standard Cell Count**  | 38,097 |
+| **Total Wire Length**    | 4,680,124 µm |
+| **LVS / DRC**            | 0 Violations (Clean Signoff) |
