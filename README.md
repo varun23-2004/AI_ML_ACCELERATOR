@@ -51,8 +51,17 @@ This is the physical and logical wrapper of the IP. It acts as the central hub, 
 This module acts as the bridge between the host CPU and the accelerator hardware.
 This is the entry point for the system. Before any matrix multiplication occurs, the CPU must define the base memory address, the active matrix size, and the quantization mode. The AXI Slave receives this over the AXI4-Lite bus and safely registers it for the FSM to use.
 
-**Address Decoding**: It decodes specific 32-bit AXI addresses to route data to the correct registers (e.g., 0x0000 for Command, 0x0004 for Base Address, 0x0008 for Matrix Size).
+**Address Decoding**: It decodes specific 32-bit AXI addresses to route data to the correct registers (e.g., (_0x0000_) for Command, (_0x0004_) for Base Address, (_0x0008_) for Matrix Size).
 
-**Protocol Protection (SLVERR)**: It enforces hardware security by strictly delineating Read-Only and Write-Only memory spaces. If the CPU maliciously or accidentally attempts to write to the Read-Only Status register (0x0010), the module immediately traps the request and issues a Slave Error (SLVERR) response.
+**Protocol Protection (SLVERR)**: It enforces hardware security by strictly delineating Read-Only and Write-Only memory spaces. If the CPU maliciously or accidentally attempts to write to the Read-Only Status register ((_0x0010_)), the module immediately traps the request and issues a Slave Error (SLVERR) response.
 
-**Command Handshakes**: Writing a 0x01 (START) to the Control register initiates the hardware. The module also exposes real-time flags (DONE, BUSY, ERROR, OVERFLOW) back to the CPU for polling.
+**Command Handshakes**: Writing a (_0x01 (START)_) to the Control register initiates the hardware. The module also exposes real-time flags (_(DONE, BUSY, ERROR, OVERFLOW)_) back to the CPU for polling.
+
+### C. Execution Orchestrator: [array_controller_fsm](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/array_controller_fsm.v)
+This is the "brain" of the accelerator. Once the CPU sends the START command, this hardware state machine takes complete control, freeing the CPU to do other tasks.
+
+**State Progression**: It automatically drives the hardware through a strict pipeline: (_IDLE_) → (_LOAD_WEIGHTS_) (fetching weights from (_SRAM_)) → (_COMPUTE_) (firing the PE array) → (_DRAIN_) (flushing the pipeline) → (_DONE_STATE_) (writing results back to memory).
+
+**Dynamic Masking**: Based on the user's matrix_size configuration, the FSM dynamically toggles the enable pins (pe_en) for specific rows in the array. This ensures power is not wasted computing unused rows.
+
+**Watchdog & Error Tracking**: It features an internal 8-bit watchdog counter. If the computation stalls and exceeds 50 cycles, or if any PE reports an accumulator overflow, the FSM safely aborts the operation, moves to an ERROR_STATE, and logs a distinct hardware error code for the CPU to read.
