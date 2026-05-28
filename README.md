@@ -62,6 +62,31 @@ This is the "brain" of the accelerator. Once the CPU sends the START command, th
 
 **State Progression**: It automatically drives the hardware through a strict pipeline: (_IDLE_) → (_LOAD_WEIGHTS_) (fetching weights from (_SRAM_)) → (_COMPUTE_) (firing the PE array) → (_DRAIN_) (flushing the pipeline) → (_DONE_STATE_) (writing results back to memory).
 
-**Dynamic Masking**: Based on the user's matrix_size configuration, the FSM dynamically toggles the enable pins (pe_en) for specific rows in the array. This ensures power is not wasted computing unused rows.
+**Dynamic Masking**: Based on the user's matrix_size configuration, the FSM dynamically toggles the enable pins (_(pe_en)_) for specific rows in the array. This ensures power is not wasted computing unused rows.
 
-**Watchdog & Error Tracking**: It features an internal 8-bit watchdog counter. If the computation stalls and exceeds 50 cycles, or if any PE reports an accumulator overflow, the FSM safely aborts the operation, moves to an ERROR_STATE, and logs a distinct hardware error code for the CPU to read.
+**Watchdog & Error Tracking**: It features an internal 8-bit watchdog counter. If the computation stalls and exceeds 50 cycles, or if any PE reports an accumulator overflow, the FSM safely aborts the operation, moves to an (_ERROR_STATE_), and logs a distinct hardware error code for the CPU to read.
+
+### D. Local Memory Buffer: [sram_controller](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/sram_controller.v)
+
+This is a 4KB (512 locations × 64-bit) dual-port memory wrapper that feeds the computational datapath.
+
+**Latency Abstraction**: Reading from external main memory (DRAM) is slow and unpredictable. This internal SRAM provides a guaranteed 2-cycle read latency.
+
+**Pipeline Synchronization**: It includes an internal busy-flag state machine that tracks the 2-cycle read delay, generating a (_sram_valid_) strobe exactly when the data is ready to be latched by the FSM or PE array, preventing data misalignment.
+
+### E. The Compute Fabric: [pe_array_4x4](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/pe_array_4x4.v)
+
+This module defines the systolic grid architecture. It instantiates 16 Processing Elements and wires them in a 2D mesh.
+
+**Spatial Data Reuse**: Instead of fetching data from memory for every single math operation, activations flow horizontally from left to right, and weights flow vertically from top to bottom. A piece of data fetched once is reused across multiple PEs in the same row or column.
+
+**Sequential Streaming**: To minimize routing congestion in the physical layout (GDSII), the array does not output a massive 256-bit bus at once. Instead, it streams the final 16-bit results out one column per cycle, dramatically reducing routing complexity and required wire tracks.
+
+### F. The Core Math Unit: [processing_element](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/processing_element.v)
+The smallest, most critical building block of the datapath. Each PE is responsible for a single Multiply-Accumulate (MAC) operation.
+
+**2-Stage Pipelining**: To achieve a high clock frequency (66.67 MHz on a 130nm node), the PE splits the workload. Stage 1 captures inputs; Stage 2 performs the combinational multiplication and accumulation.
+
+**Dynamic Precision Mode**: The multiplier physically adapts based on the pe_mode signal. It can execute standard 8-bit math, or switch to 4-bit operations to support aggressively quantized neural networks.
+
+**Saturation Logic**: It utilizes a 20-bit internal accumulator for an 8-bit multiply. If the sum exceeds the maximum 20-bit value (_(0xFFFFF)_), the hardware features a saturation clamp. Instead of wrapping around to zero (which would catastrophically invert a neural network's prediction), it locks the value at the maximum maximum limit and asserts an overflow flag.
