@@ -37,3 +37,10 @@ an integrated dual-port SRAM for local data buffering.
 
 ## 4. System Architecture 
 The AI/ML Accelerator is highly modular, strictly separating the control plane (bus interfacing and state management) from the datapath (computation and memory). It uses a top-level wrapper, [accel_ip_top](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/accel_ip_top.v), to integrate five core sub-modules.
+
+**A. Top-Level Integration: [accel_ip_top](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/accel_ip_top.v)
+This is the physical and logical wrapper of the IP. It acts as the central hub, mapping external SoC signals to the internal sub-systems.
+
+Signal Routing: It directly wires the configuration outputs from the AXI4-Lite Slave into the FSM, and routes the memory/compute signals between the FSM, the SRAM, and the PE Array.
+
+Data Unpacking: It handles the continuous 64-bit data streams coming from the SRAM and unpacks them into discrete 8-bit activation and weight buses to feed the systolic rows.
