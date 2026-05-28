@@ -34,3 +34,6 @@ an integrated dual-port SRAM for local data buffering.
 **Hardware State Machine Orchestration**: A centralized Array Controller FSM independently manages weight fetching, systolic execution, and result draining, minimizing host CPU overhead.
 
 **Standard AMBA AXI4-Lite Protocol**: Features a compliant memory-mapped slave interface dedicated to configuring computation parameters (base address, matrix size) and polling execution status.
+
+## 4. System Architecture 
+The AI/ML Accelerator is highly modular, strictly separating the control plane (bus interfacing and state management) from the datapath (computation and memory). It uses a top-level wrapper, [accel_ip_top](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/accel_ip_top.v), to integrate five core sub-modules.
