@@ -149,17 +149,17 @@ make mount
 
 ---
 
-## 2. Automated Flow (Push-Button)
+### B. Automated Flow (Push-Button)
 
 Use this method for rapid, hands-off generation of the GDSII layout utilizing the predefined parameters in `config.tcl`.
 
-### Run Flow
+#### Run Flow
 
 ```bash
 ./flow.tcl -design accel_ip
 ```
 
-### Output Location
+#### Output Location
 
 Upon successful completion, the final physical layout will be generated at:
 
@@ -169,24 +169,24 @@ designs/accel_ip/runs/RUN_<timestamp>/results/signoff/accel_ip_top.gds
 
 ---
 
-## 3. Interactive Flow (Stage-by-Stage)
+### C. Interactive Flow (Stage-by-Stage)
 
 Use this method for debugging, analyzing intermediate metrics, or fine-tuning individual stages of the physical design flow.
 
-### Initialize Interactive Mode
+#### Initialize Interactive Mode
 
 ```bash
 ./flow.tcl -interactive
 ```
 
-### Load OpenLane Environment
+#### Load OpenLane Environment
 
 ```tcl
 package require openlane 0.9
 prep -design accel_ip
 ```
 
-### Logic Synthesis
+#### Logic Synthesis
 
 Maps behavioral RTL into technology-mapped standard cells using **Yosys** and **ABC**.
 
@@ -194,7 +194,7 @@ Maps behavioral RTL into technology-mapped standard cells using **Yosys** and **
 run_synthesis
 ```
 
-### Floorplanning & Power Distribution Network (PDN)
+#### Floorplanning & Power Distribution Network (PDN)
 
 Defines the core area, I/O placement, and generates the power delivery network using **OpenROAD**.
 
@@ -203,7 +203,7 @@ run_floorplan
 run_pdn
 ```
 
-### Placement
+#### Placement
 
 Performs global and detailed placement using **RePlace** and **OpenDP**.
 
@@ -211,7 +211,7 @@ Performs global and detailed placement using **RePlace** and **OpenDP**.
 run_placement
 ```
 
-### Clock Tree Synthesis (CTS)
+#### Clock Tree Synthesis (CTS)
 
 Builds the clock distribution network and minimizes clock skew using **TritonCTS**.
 
@@ -219,7 +219,7 @@ Builds the clock distribution network and minimizes clock skew using **TritonCTS
 run_cts
 ```
 
-### Routing
+#### Routing
 
 Performs global and detailed routing using **FastRoute** and **TritonRoute**.
 
@@ -227,7 +227,7 @@ Performs global and detailed routing using **FastRoute** and **TritonRoute**.
 run_routing
 ```
 
-### Parasitic Extraction & Static Timing Analysis
+#### Parasitic Extraction & Static Timing Analysis
 
 Extracts RC parasitics and verifies timing closure using **OpenRCX** and **OpenSTA**.
 
@@ -236,7 +236,7 @@ run_parasitics
 run_sta
 ```
 
-### Physical Verification & Signoff
+#### Physical Verification & Signoff
 
 Runs final verification checks including:
 
@@ -253,7 +253,7 @@ run_antenna_check
 
 ---
 
-## 4. Layout Verification
+### D. Layout Verification
 
 To visually inspect the final routed GDSII layout or debug DRC violations, open the design in **Magic VLSI**.
 
@@ -266,7 +266,7 @@ magic -T /path/to/sky130A/libs.tech/magic/sky130A.tech \
 
 ---
 
-## Generated Artifacts
+### Generated Artifacts
 
 The OpenLane flow produces the following key outputs:
 
