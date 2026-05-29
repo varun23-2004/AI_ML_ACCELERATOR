@@ -38,7 +38,7 @@ an integrated dual-port SRAM for local data buffering.
 ## 4. System Architecture 
 The AI/ML Accelerator is highly modular, strictly separating the control plane (bus interfacing and state management) from the datapath (computation and memory). It uses a top-level wrapper, [accel_ip_top](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/accel_ip_top.v), to integrate five core sub-modules.
 
-### A. The Core Math Unit: [processing_element](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/processing_element.v)
+### A. The Core Math Unit: [processing_element](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/processing_element.v) [img](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/Images/processing_element.png)
 The smallest, most critical building block of the datapath. Each PE is responsible for a single Multiply-Accumulate (MAC) operation.
 
 - **2-Stage Pipelining**: To achieve a high clock frequency (66.67 MHz on a 130nm node), the PE splits the workload. Stage 1 captures inputs; Stage 2 performs the combinational multiplication and accumulation.
@@ -47,7 +47,7 @@ The smallest, most critical building block of the datapath. Each PE is responsib
 
 - **Saturation Logic**: It utilizes a 20-bit internal accumulator for an 8-bit multiply. If the sum exceeds the maximum 20-bit value (_(0xFFFFF)_), the hardware features a saturation clamp. Instead of wrapping around to zero (which would catastrophically invert a neural network's prediction), it locks the value at the maximum maximum limit and asserts an overflow flag.
 
-### B. The Compute Fabric: [pe_array_4x4](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/pe_array_4x4.v)
+### B. The Compute Fabric: [pe_array_4x4](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/pe_array_4x4.v) [img](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/Images/pe_array_4x4_transcript.png)
 
 This module defines the systolic grid architecture. It instantiates 16 Processing Elements and wires them in a 2D mesh.
 
@@ -55,7 +55,7 @@ This module defines the systolic grid architecture. It instantiates 16 Processin
 
 - **Sequential Streaming**: To minimize routing congestion in the physical layout (GDSII), the array does not output a massive 256-bit bus at once. Instead, it streams the final 16-bit results out one column per cycle, dramatically reducing routing complexity and required wire tracks.
 
-### C. Execution Orchestrator: [array_controller_fsm](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/array_controller_fsm.v)
+### C. Execution Orchestrator: [array_controller_fsm](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/array_controller_fsm.v) [img](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/Images/array_controller_fsm_transcript.png)
 This is the "brain" of the accelerator. Once the CPU sends the START command, this hardware state machine takes complete control, freeing the CPU to do other tasks.
 
 - **State Progression**: It automatically drives the hardware through a strict pipeline: (_IDLE_) → (_LOAD_WEIGHTS_) (fetching weights from (_SRAM_)) → (_COMPUTE_) (firing the PE array) → (_DRAIN_) (flushing the pipeline) → (_DONE_STATE_) (writing results back to memory).
@@ -64,7 +64,7 @@ This is the "brain" of the accelerator. Once the CPU sends the START command, th
 
 - **Watchdog & Error Tracking**: It features an internal 8-bit watchdog counter. If the computation stalls and exceeds 50 cycles, or if any PE reports an accumulator overflow, the FSM safely aborts the operation, moves to an (_ERROR_STATE_), and logs a distinct hardware error code for the CPU to read.
 
-### D. Local Memory Buffer: [sram_controller](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/sram_controller.v)
+### D. Local Memory Buffer: [sram_controller](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/sram_controller.v) [img](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/Images/sram_controller_transcript.png)
 
 This is a 4KB (512 locations × 64-bit) dual-port memory wrapper that feeds the computational datapath.
 
@@ -72,7 +72,7 @@ This is a 4KB (512 locations × 64-bit) dual-port memory wrapper that feeds the 
 
 - **Pipeline Synchronization**: It includes an internal busy-flag state machine that tracks the 2-cycle read delay, generating a (_sram_valid_) strobe exactly when the data is ready to be latched by the FSM or PE array, preventing data misalignment.
 
-### E. Configuration Interface: [axi4_lite_slave](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/axi4_lite_slave.v)
+### E. Configuration Interface: [axi4_lite_slave](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/axi4_lite_slave.v) [img] (https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/Images/axi-4_lite_transcript.png)
 
 This module acts as the bridge between the host CPU and the accelerator hardware.
 This is the entry point for the system. Before any matrix multiplication occurs, the CPU must define the base memory address, the active matrix size, and the quantization mode. The AXI Slave receives this over the AXI4-Lite bus and safely registers it for the FSM to use.
@@ -83,7 +83,7 @@ This is the entry point for the system. Before any matrix multiplication occurs,
 
 - **Command Handshakes**: Writing a (_0x01 (START)_) to the Control register initiates the hardware. The module also exposes real-time flags (_(DONE, BUSY, ERROR, OVERFLOW)_) back to the CPU for polling.
 
-### F. Top-Level Integration: [accel_ip_top](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/accel_ip_top.v)
+### F. Top-Level Integration: [accel_ip_top](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/accel_ip_top.v) [img](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/Images/accel_top_transcript.png)
 
 This is the physical and logical wrapper of the IP. It acts as the central hub, mapping external SoC signals to the internal sub-systems.
 
