@@ -123,3 +123,161 @@ The IP was synthesized, placed, and routed using the OpenLane flow, achieving a 
 | **Standard Cell Count**  | 38,097 |
 | **Total Wire Length**    | 4,680,124 µm |
 | **LVS / DRC**            | 0 Violations (Clean Signoff) |
+
+
+# ⚙️ Execution Guide: RTL-to-GDSII Flow
+
+This section details the physical implementation pipeline using the OpenLane EDA framework. You can reproduce the final layout using either the automated push-button flow or the interactive stage-by-stage flow.
+
+---
+
+## 1. Environment Setup
+
+Ensure your local environment is configured with the necessary tools and design kits before initiating the flow.
+
+### Requirements
+
+- **Operating System:** Ubuntu 22.04 (Recommended)
+- **Dependencies:** Docker, OpenLane, SkyWater 130nm PDK (Sky130A)
+
+### Launch OpenLane Container
+
+```bash
+cd /path/to/openlane
+make mount
+```
+
+---
+
+## 2. Automated Flow (Push-Button)
+
+Use this method for rapid, hands-off generation of the GDSII layout utilizing the predefined parameters in `config.tcl`.
+
+### Run Flow
+
+```bash
+./flow.tcl -design accel_ip
+```
+
+### Output Location
+
+Upon successful completion, the final physical layout will be generated at:
+
+```text
+designs/accel_ip/runs/RUN_<timestamp>/results/signoff/accel_ip_top.gds
+```
+
+---
+
+## 3. Interactive Flow (Stage-by-Stage)
+
+Use this method for debugging, analyzing intermediate metrics, or fine-tuning individual stages of the physical design flow.
+
+### Initialize Interactive Mode
+
+```bash
+./flow.tcl -interactive
+```
+
+### Load OpenLane Environment
+
+```tcl
+package require openlane 0.9
+prep -design accel_ip
+```
+
+### Logic Synthesis
+
+Maps behavioral RTL into technology-mapped standard cells using **Yosys** and **ABC**.
+
+```tcl
+run_synthesis
+```
+
+### Floorplanning & Power Distribution Network (PDN)
+
+Defines the core area, I/O placement, and generates the power delivery network using **OpenROAD**.
+
+```tcl
+run_floorplan
+run_pdn
+```
+
+### Placement
+
+Performs global and detailed placement using **RePlace** and **OpenDP**.
+
+```tcl
+run_placement
+```
+
+### Clock Tree Synthesis (CTS)
+
+Builds the clock distribution network and minimizes clock skew using **TritonCTS**.
+
+```tcl
+run_cts
+```
+
+### Routing
+
+Performs global and detailed routing using **FastRoute** and **TritonRoute**.
+
+```tcl
+run_routing
+```
+
+### Parasitic Extraction & Static Timing Analysis
+
+Extracts RC parasitics and verifies timing closure using **OpenRCX** and **OpenSTA**.
+
+```tcl
+run_parasitics
+run_sta
+```
+
+### Physical Verification & Signoff
+
+Runs final verification checks including:
+
+- Design Rule Check (DRC)
+- Layout Versus Schematic (LVS)
+- Antenna Rule Checks
+
+```tcl
+run_magic
+run_magic_drc
+run_lvs
+run_antenna_check
+```
+
+---
+
+## 4. Layout Verification
+
+To visually inspect the final routed GDSII layout or debug DRC violations, open the design in **Magic VLSI**.
+
+### Open GDSII in Magic
+
+```bash
+magic -T /path/to/sky130A/libs.tech/magic/sky130A.tech \
+      designs/accel_ip/runs/RUN_<timestamp>/results/signoff/accel_ip_top.gds
+```
+
+---
+
+## Generated Artifacts
+
+The OpenLane flow produces the following key outputs:
+
+| Stage | Artifact |
+|---------|----------|
+| Synthesis | Netlist (`.v`) |
+| Floorplanning | DEF (`.def`) |
+| Placement | Placed DEF |
+| CTS | CTS DEF |
+| Routing | Routed DEF |
+| Signoff | GDSII (`.gds`) |
+| Verification | DRC/LVS Reports |
+
+---
