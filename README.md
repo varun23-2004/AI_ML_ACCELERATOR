@@ -125,22 +125,22 @@ The IP was synthesized, placed, and routed using the OpenLane flow, achieving a 
 | **LVS / DRC**            | 0 Violations (Clean Signoff) |
 
 
-# ⚙️ Execution Guide: RTL-to-GDSII Flow
+## 7. Execution Guide: RTL-to-GDSII Flow
 
 This section details the physical implementation pipeline using the OpenLane EDA framework. You can reproduce the final layout using either the automated push-button flow or the interactive stage-by-stage flow.
 
 ---
 
-## 1. Environment Setup
+### A. Environment Setup
 
 Ensure your local environment is configured with the necessary tools and design kits before initiating the flow.
 
-### Requirements
+#### Requirements
 
 - **Operating System:** Ubuntu 22.04 (Recommended)
 - **Dependencies:** Docker, OpenLane, SkyWater 130nm PDK (Sky130A)
 
-### Launch OpenLane Container
+#### Launch OpenLane Container
 
 ```bash
 cd /path/to/openlane
