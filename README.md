@@ -15,25 +15,25 @@ feeding the systolic pipeline continuously and preventing computational stalls c
 - **End-to-End Silicon Implementation**: To design, verify, and physically implement a complex AI/ML hardware accelerator, driving the design from behavioral RTL down to a routable 
 GDSII layout using the OpenLane EDA flow.
 
-**Scalable Compute Architecture**: To architect a 4x4 systolic array capable of performing highly parallel, variable-precision (8-bit and 4-bit) Multiply-Accumulate (MAC) 
+- **Scalable Compute Architecture**: To architect a 4x4 systolic array capable of performing highly parallel, variable-precision (8-bit and 4-bit) Multiply-Accumulate (MAC) 
 operations for efficient neural network inference.
 
-**Industry-Standard SoC Integration**: To ensure the IP is ready for seamless integration into modern System-on-Chip (SoC) environments by designing a compliant AXI4-Lite slave interface and 
+- **Industry-Standard SoC Integration**: To ensure the IP is ready for seamless integration into modern System-on-Chip (SoC) environments by designing a compliant AXI4-Lite slave interface and 
 an integrated dual-port SRAM for local data buffering.
 
-**PPA Optimization and Signoff**: To target the SkyWater 130nm (Sky130A) technology node and successfully achieve a clean physical design signoff (Zero DRC/LVS violations) while meeting strict Power, Performance, and Area constraints.
+- **PPA Optimization and Signoff**: To target the SkyWater 130nm (Sky130A) technology node and successfully achieve a clean physical design signoff (Zero DRC/LVS violations) while meeting strict Power, Performance, and Area constraints.
 
 ## 3. Key Objectives 
 
-**4x4 Systolic Processing Array**: Executes highly parallel Multiply-Accumulate (MAC) operations with spatial data reuse, maximizing computational throughput for neural network matrix multiplications
+- **4x4 Systolic Processing Array**: Executes highly parallel Multiply-Accumulate (MAC) operations with spatial data reuse, maximizing computational throughput for neural network matrix multiplications
 
-**Configurable Quantization Modes**: Supports dynamic switching between 8-bit and 4-bit integer precision, allowing software to double the computation throughput when lower dynamic range is sufficient.
+- **Configurable Quantization Modes**: Supports dynamic switching between 8-bit and 4-bit integer precision, allowing software to double the computation throughput when lower dynamic range is sufficient.
 
-**Integrated Dual-Port SRAM**: Internal 4KB (512 x 64-bit) memory block decouples the systolic array from external bus latency, providing continuous, high-bandwidth streaming of weights and activations.
+- **Integrated Dual-Port SRAM**: Internal 4KB (512 x 64-bit) memory block decouples the systolic array from external bus latency, providing continuous, high-bandwidth streaming of weights and activations.
 
-**Hardware State Machine Orchestration**: A centralized Array Controller FSM independently manages weight fetching, systolic execution, and result draining, minimizing host CPU overhead.
+- **Hardware State Machine Orchestration**: A centralized Array Controller FSM independently manages weight fetching, systolic execution, and result draining, minimizing host CPU overhead.
 
-**Standard AMBA AXI4-Lite Protocol**: Features a compliant memory-mapped slave interface dedicated to configuring computation parameters (base address, matrix size) and polling execution status.
+- **Standard AMBA AXI4-Lite Protocol**: Features a compliant memory-mapped slave interface dedicated to configuring computation parameters (base address, matrix size) and polling execution status.
 
 ## 4. System Architecture 
 The AI/ML Accelerator is highly modular, strictly separating the control plane (bus interfacing and state management) from the datapath (computation and memory). It uses a top-level wrapper, [accel_ip_top](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/accel_ip_top.v), to integrate five core sub-modules.
@@ -41,55 +41,55 @@ The AI/ML Accelerator is highly modular, strictly separating the control plane (
 ### A. The Core Math Unit: [processing_element](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/processing_element.v)
 The smallest, most critical building block of the datapath. Each PE is responsible for a single Multiply-Accumulate (MAC) operation.
 
-**2-Stage Pipelining**: To achieve a high clock frequency (66.67 MHz on a 130nm node), the PE splits the workload. Stage 1 captures inputs; Stage 2 performs the combinational multiplication and accumulation.
+- **2-Stage Pipelining**: To achieve a high clock frequency (66.67 MHz on a 130nm node), the PE splits the workload. Stage 1 captures inputs; Stage 2 performs the combinational multiplication and accumulation.
 
-**Dynamic Precision Mode**: The multiplier physically adapts based on the pe_mode signal. It can execute standard 8-bit math, or switch to 4-bit operations to support aggressively quantized neural networks.
+- **Dynamic Precision Mode**: The multiplier physically adapts based on the pe_mode signal. It can execute standard 8-bit math, or switch to 4-bit operations to support aggressively quantized neural networks.
 
-**Saturation Logic**: It utilizes a 20-bit internal accumulator for an 8-bit multiply. If the sum exceeds the maximum 20-bit value (_(0xFFFFF)_), the hardware features a saturation clamp. Instead of wrapping around to zero (which would catastrophically invert a neural network's prediction), it locks the value at the maximum maximum limit and asserts an overflow flag.
+- **Saturation Logic**: It utilizes a 20-bit internal accumulator for an 8-bit multiply. If the sum exceeds the maximum 20-bit value (_(0xFFFFF)_), the hardware features a saturation clamp. Instead of wrapping around to zero (which would catastrophically invert a neural network's prediction), it locks the value at the maximum maximum limit and asserts an overflow flag.
 
 ### B. The Compute Fabric: [pe_array_4x4](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/pe_array_4x4.v)
 
 This module defines the systolic grid architecture. It instantiates 16 Processing Elements and wires them in a 2D mesh.
 
-**Spatial Data Reuse**: Instead of fetching data from memory for every single math operation, activations flow horizontally from left to right, and weights flow vertically from top to bottom. A piece of data fetched once is reused across multiple PEs in the same row or column.
+- **Spatial Data Reuse**: Instead of fetching data from memory for every single math operation, activations flow horizontally from left to right, and weights flow vertically from top to bottom. A piece of data fetched once is reused across multiple PEs in the same row or column.
 
-**Sequential Streaming**: To minimize routing congestion in the physical layout (GDSII), the array does not output a massive 256-bit bus at once. Instead, it streams the final 16-bit results out one column per cycle, dramatically reducing routing complexity and required wire tracks.
+- **Sequential Streaming**: To minimize routing congestion in the physical layout (GDSII), the array does not output a massive 256-bit bus at once. Instead, it streams the final 16-bit results out one column per cycle, dramatically reducing routing complexity and required wire tracks.
 
 ### C. Execution Orchestrator: [array_controller_fsm](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/array_controller_fsm.v)
 This is the "brain" of the accelerator. Once the CPU sends the START command, this hardware state machine takes complete control, freeing the CPU to do other tasks.
 
-**State Progression**: It automatically drives the hardware through a strict pipeline: (_IDLE_) → (_LOAD_WEIGHTS_) (fetching weights from (_SRAM_)) → (_COMPUTE_) (firing the PE array) → (_DRAIN_) (flushing the pipeline) → (_DONE_STATE_) (writing results back to memory).
+- **State Progression**: It automatically drives the hardware through a strict pipeline: (_IDLE_) → (_LOAD_WEIGHTS_) (fetching weights from (_SRAM_)) → (_COMPUTE_) (firing the PE array) → (_DRAIN_) (flushing the pipeline) → (_DONE_STATE_) (writing results back to memory).
 
-**Dynamic Masking**: Based on the user's matrix_size configuration, the FSM dynamically toggles the enable pins (_(pe_en)_) for specific rows in the array. This ensures power is not wasted computing unused rows.
+- **Dynamic Masking**: Based on the user's matrix_size configuration, the FSM dynamically toggles the enable pins (_(pe_en)_) for specific rows in the array. This ensures power is not wasted computing unused rows.
 
-**Watchdog & Error Tracking**: It features an internal 8-bit watchdog counter. If the computation stalls and exceeds 50 cycles, or if any PE reports an accumulator overflow, the FSM safely aborts the operation, moves to an (_ERROR_STATE_), and logs a distinct hardware error code for the CPU to read.
+- **Watchdog & Error Tracking**: It features an internal 8-bit watchdog counter. If the computation stalls and exceeds 50 cycles, or if any PE reports an accumulator overflow, the FSM safely aborts the operation, moves to an (_ERROR_STATE_), and logs a distinct hardware error code for the CPU to read.
 
 ### D. Local Memory Buffer: [sram_controller](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/sram_controller.v)
 
 This is a 4KB (512 locations × 64-bit) dual-port memory wrapper that feeds the computational datapath.
 
-**Latency Abstraction**: Reading from external main memory (DRAM) is slow and unpredictable. This internal SRAM provides a guaranteed 2-cycle read latency.
+- **Latency Abstraction**: Reading from external main memory (DRAM) is slow and unpredictable. This internal SRAM provides a guaranteed 2-cycle read latency.
 
-**Pipeline Synchronization**: It includes an internal busy-flag state machine that tracks the 2-cycle read delay, generating a (_sram_valid_) strobe exactly when the data is ready to be latched by the FSM or PE array, preventing data misalignment.
+- **Pipeline Synchronization**: It includes an internal busy-flag state machine that tracks the 2-cycle read delay, generating a (_sram_valid_) strobe exactly when the data is ready to be latched by the FSM or PE array, preventing data misalignment.
 
 ### E. Configuration Interface: [axi4_lite_slave](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/axi4_lite_slave.v)
 
 This module acts as the bridge between the host CPU and the accelerator hardware.
 This is the entry point for the system. Before any matrix multiplication occurs, the CPU must define the base memory address, the active matrix size, and the quantization mode. The AXI Slave receives this over the AXI4-Lite bus and safely registers it for the FSM to use.
 
-**Address Decoding**: It decodes specific 32-bit AXI addresses to route data to the correct registers (e.g., (_0x0000_) for Command, (_0x0004_) for Base Address, (_0x0008_) for Matrix Size).
+- **Address Decoding**: It decodes specific 32-bit AXI addresses to route data to the correct registers (e.g., (_0x0000_) for Command, (_0x0004_) for Base Address, (_0x0008_) for Matrix Size).
 
-**Protocol Protection (SLVERR)**: It enforces hardware security by strictly delineating Read-Only and Write-Only memory spaces. If the CPU maliciously or accidentally attempts to write to the Read-Only Status register ((_0x0010_)), the module immediately traps the request and issues a Slave Error (SLVERR) response.
+- **Protocol Protection (SLVERR)**: It enforces hardware security by strictly delineating Read-Only and Write-Only memory spaces. If the CPU maliciously or accidentally attempts to write to the Read-Only Status register ((_0x0010_)), the module immediately traps the request and issues a Slave Error (SLVERR) response.
 
-**Command Handshakes**: Writing a (_0x01 (START)_) to the Control register initiates the hardware. The module also exposes real-time flags (_(DONE, BUSY, ERROR, OVERFLOW)_) back to the CPU for polling.
+- **Command Handshakes**: Writing a (_0x01 (START)_) to the Control register initiates the hardware. The module also exposes real-time flags (_(DONE, BUSY, ERROR, OVERFLOW)_) back to the CPU for polling.
 
 ### F. Top-Level Integration: [accel_ip_top](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/accel_ip_top.v)
 
 This is the physical and logical wrapper of the IP. It acts as the central hub, mapping external SoC signals to the internal sub-systems.
 
-**Signal Routing**: It directly wires the configuration outputs from the AXI4-Lite Slave into the FSM, and routes the memory/compute signals between the FSM, the SRAM, and the PE Array.
+- **Signal Routing**: It directly wires the configuration outputs from the AXI4-Lite Slave into the FSM, and routes the memory/compute signals between the FSM, the SRAM, and the PE Array.
 
-**Data Unpacking**: It handles the continuous 64-bit data streams coming from the SRAM and unpacks them into discrete 8-bit activation and weight buses to feed the systolic rows.
+- **Data Unpacking**: It handles the continuous 64-bit data streams coming from the SRAM and unpacks them into discrete 8-bit activation and weight buses to feed the systolic rows.
 
 ## 5. Memory-Mapped Register (MAR) Map
 
