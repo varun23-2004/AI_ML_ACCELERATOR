@@ -40,6 +40,7 @@ The AI/ML Accelerator is highly modular, strictly separating the control plane (
 
 ### A. The Core Math Unit: [processing_element](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/processing_element.v)                  
 [img](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/Images/processing_element.png)
+
 The smallest, most critical building block of the datapath. Each PE is responsible for a single Multiply-Accumulate (MAC) operation.
 
 - **2-Stage Pipelining**: To achieve a high clock frequency (66.67 MHz on a 130nm node), the PE splits the workload. Stage 1 captures inputs; Stage 2 performs the combinational multiplication and accumulation.
@@ -59,6 +60,7 @@ This module defines the systolic grid architecture. It instantiates 16 Processin
     
 ### C. Execution Orchestrator: [array_controller_fsm](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/array_controller_fsm.v)                  
 [img](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/Images/array_controller_fsm_transcript.png)
+
 This is the "brain" of the accelerator. Once the CPU sends the START command, this hardware state machine takes complete control, freeing the CPU to do other tasks.
 
 - **State Progression**: It automatically drives the hardware through a strict pipeline: (_IDLE_) → (_LOAD_WEIGHTS_) (fetching weights from (_SRAM_)) → (_COMPUTE_) (firing the PE array) → (_DRAIN_) (flushing the pipeline) → (_DONE_STATE_) (writing results back to memory).
