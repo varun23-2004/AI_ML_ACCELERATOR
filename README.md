@@ -12,7 +12,7 @@ feeding the systolic pipeline continuously and preventing computational stalls c
 
 ## 2. Project Objectives
 
-**End-to-End Silicon Implementation**: To design, verify, and physically implement a complex AI/ML hardware accelerator, driving the design from behavioral RTL down to a routable 
+- **End-to-End Silicon Implementation**: To design, verify, and physically implement a complex AI/ML hardware accelerator, driving the design from behavioral RTL down to a routable 
 GDSII layout using the OpenLane EDA flow.
 
 **Scalable Compute Architecture**: To architect a 4x4 systolic array capable of performing highly parallel, variable-precision (8-bit and 4-bit) Multiply-Accumulate (MAC) 
