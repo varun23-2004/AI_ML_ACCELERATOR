@@ -76,7 +76,7 @@ This is a 4KB (512 locations × 64-bit) dual-port memory wrapper that feeds the 
 
 - **Latency Abstraction**: Reading from external main memory (DRAM) is slow and unpredictable. This internal SRAM provides a guaranteed 2-cycle read latency.
 
-- **Pipeline Synchronization**: It includes an internal busy-flag state machine that tracks the 2-cycle read delay, generating a (_sram_valid_) strobe exactly when the data is ready to be latched by the FSM or PE array, preventing data misalignment.
+- **Pipeline Synchronization**: It includes an internal busy-flag state machine that tracks the 2-cycle read delay, generating a _sram_valid_ strobe exactly when the data is ready to be latched by the FSM or PE array, preventing data misalignment.
 
 ### E. Configuration Interface: [axi4_lite_slave](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/axi4_lite_slave.v)
 [IMAGE](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/Images/axi-4_lite_transcript.png)
@@ -84,11 +84,11 @@ This is a 4KB (512 locations × 64-bit) dual-port memory wrapper that feeds the 
 This module acts as the bridge between the host CPU and the accelerator hardware.
 This is the entry point for the system. Before any matrix multiplication occurs, the CPU must define the base memory address, the active matrix size, and the quantization mode. The AXI Slave receives this over the AXI4-Lite bus and safely registers it for the FSM to use.
 
-- **Address Decoding**: It decodes specific 32-bit AXI addresses to route data to the correct registers (e.g., (_0x0000_) for Command, (_0x0004_) for Base Address, (_0x0008_) for Matrix Size).
+- **Address Decoding**: It decodes specific 32-bit AXI addresses to route data to the correct registers (e.g., _0x0000_ for Command, _0x0004_ for Base Address, _0x0008_ for Matrix Size).
 
-- **Protocol Protection (SLVERR)**: It enforces hardware security by strictly delineating Read-Only and Write-Only memory spaces. If the CPU maliciously or accidentally attempts to write to the Read-Only Status register ((_0x0010_)), the module immediately traps the request and issues a Slave Error (SLVERR) response.
+- **Protocol Protection (SLVERR)**: It enforces hardware security by strictly delineating Read-Only and Write-Only memory spaces. If the CPU maliciously or accidentally attempts to write to the Read-Only Status register (_0x0010_), the module immediately traps the request and issues a Slave Error SLVERR response.
 
-- **Command Handshakes**: Writing a (_0x01 (START)_) to the Control register initiates the hardware. The module also exposes real-time flags (_(DONE, BUSY, ERROR, OVERFLOW)_) back to the CPU for polling.
+- **Command Handshakes**: Writing a _0x01 (START)_ to the Control register initiates the hardware. The module also exposes real-time flags (_(DONE, BUSY, ERROR, OVERFLOW)_) back to the CPU for polling.
 
 ### F. Top-Level Integration: [accel_ip_top](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/accel_ip_top.v)
 [IMAGE](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/Images/accel_top_transcript.png)
