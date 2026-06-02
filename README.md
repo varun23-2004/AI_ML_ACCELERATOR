@@ -63,11 +63,11 @@ This module defines the systolic grid architecture. It instantiates 16 Processin
 
 This is the "brain" of the accelerator. Once the CPU sends the START command, this hardware state machine takes complete control, freeing the CPU to do other tasks.
 
-- **State Progression**: It automatically drives the hardware through a strict pipeline: (_IDLE_) → (_LOAD_WEIGHTS_) (fetching weights from (_SRAM_)) → (_COMPUTE_) (firing the PE array) → (_DRAIN_) (flushing the pipeline) → (_DONE_STATE_) (writing results back to memory).
+- **State Progression**: It automatically drives the hardware through a strict pipeline: _IDLE_ → _LOAD_WEIGHTS_ (fetching weights from _SRAM_) → _COMPUTE_ (firing the PE array) → _DRAIN_ (flushing the pipeline) → _DONE_STATE_ (writing results back to memory).
 
 - **Dynamic Masking**: Based on the user's matrix_size configuration, the FSM dynamically toggles the enable pins (_(pe_en)_) for specific rows in the array. This ensures power is not wasted computing unused rows.
 
-- **Watchdog & Error Tracking**: It features an internal 8-bit watchdog counter. If the computation stalls and exceeds 50 cycles, or if any PE reports an accumulator overflow, the FSM safely aborts the operation, moves to an (_ERROR_STATE_), and logs a distinct hardware error code for the CPU to read.
+- **Watchdog & Error Tracking**: It features an internal 8-bit watchdog counter. If the computation stalls and exceeds 50 cycles, or if any PE reports an accumulator overflow, the FSM safely aborts the operation, moves to an _ERROR_STATE_, and logs a distinct hardware error code for the CPU to read.
 
 ### D. Local Memory Buffer: [sram_controller](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/RTL_Design/sram_controller.v)
 [IMAGE](https://github.com/varun23-2004/AI_ML_ACCELERATOR/blob/main/Images/sram_controller_transcript.png)
