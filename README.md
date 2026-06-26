@@ -125,7 +125,7 @@ The IP was synthesized, placed, and routed using the OpenLane flow, achieving a 
 | Metric                  | Value |
 |--------------------------|-------|
 | **Technology Node**      | SkyWater 130nm (Sky130A) |
-| **Clock Frequency**      | 66.67 MHz (15ns Period) |
+| **Clock Frequency**      | 200 MHz (5ns Period) |
 | **Core Area**            | 2.31 mm² |
 | **Final Utilization**    | 35.74% |
 | **Standard Cell Count**  | 38,097 |
