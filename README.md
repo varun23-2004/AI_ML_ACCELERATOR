@@ -289,39 +289,4 @@ The OpenLane flow produces the following key outputs:
 | Verification | DRC/LVS Reports |
 
 ---
-graph LR
-    %% Subgraph for the Host System
-    subgraph Host_System [Host System / SoC]
-        CPU[Host CPU / Master]
-    end
 
-    %% Subgraph for the Accelerator IP
-    subgraph accel_ip_top [accel_ip_top: AI/ML Systolic Accelerator]
-        direction TB
-        
-        AXI[axi4_lite_slave <br/> Configuration & Telemetry]
-        FSM[array_controller_fsm <br/> Execution Orchestrator]
-        SRAM[(sram_controller <br/> 4KB Local Buffer)]
-        PE[pe_array_4x4 <br/> Systolic Compute Fabric]
-        
-        %% AXI to FSM
-        AXI -- "Config Registers <br/> (START, base_addr, mode)" --> FSM
-        FSM -- "Status Flags <br/> (DONE, BUSY, ERROR)" --> AXI
-        
-        %% FSM to SRAM
-        FSM -- "Memory Controls <br/> (req, we, addr)" --> SRAM
-        SRAM -- "Data Ready <br/> (valid, ready)" --> FSM
-        
-        %% FSM to PE
-        FSM -- "Compute Controls <br/> (pe_en, pe_mode, clear_acc)" --> PE
-        PE -- "Result Pipeline <br/> (pe_result, valid, overflow)" --> FSM
-        
-        %% Data path routing (SRAM to PE)
-        SRAM ==>|"64-bit Data Unpacked <br/> (Activations & Weights)"| PE
-        
-        %% Writeback
-        FSM -.->|"Packed 64-bit Writeback <br/> (sram_wdata)"| SRAM
-    end
-
-    %% External Bus
-    CPU <==>|"Standard AMBA <br/> AXI4-Lite Bus"| AXI
