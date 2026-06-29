@@ -2,9 +2,7 @@
 
 module tb_accel_ip_top;
 
-  // ===========================================================================
   // 1. System Interface Signal Declarations
-  // ===========================================================================
   reg          clk;
   reg          rst_n;
 
@@ -34,9 +32,7 @@ module tb_accel_ip_top;
   wire [1:0]   axi_rresp;
   reg          axi_rready;
 
-  // ===========================================================================
   // 2. Verification Global Variables & Constants
-  // ===========================================================================
   integer      error_count = 0;
   integer      test_count  = 0;
   integer      timeout_cycles;
@@ -55,9 +51,7 @@ module tb_accel_ip_top;
   localparam [15:0] ADDR_CYCLE_COUNT = 16'h0014;
   localparam [15:0] ADDR_ERROR_CODE  = 16'h0018;
 
-  // ===========================================================================
   // 3. Device Under Test (DUT) - Top Level Instantiation
-  // ===========================================================================
   accel_ip_top dut (
     .clk         (clk),
     .rst_n       (rst_n),
@@ -79,17 +73,13 @@ module tb_accel_ip_top;
     .axi_rready  (axi_rready)
   );
 
-  // ===========================================================================
   // 4. Clock Infrastructure (100MHz System Clock)
-  // ===========================================================================
   initial begin
     clk = 0;
     forever #5 clk = ~clk;
   end
 
-  // ===========================================================================
   // 5. Bus Functional Models (BFMs) & Validation Tasks
-  // ===========================================================================
 
   // Task: Synchronous System Reset
   task system_reset;
@@ -204,23 +194,17 @@ module tb_accel_ip_top;
     end
   endtask
 
-  // ===========================================================================
   // 6. Main Integration Test Sequence
-  // ===========================================================================
   initial begin
     $display("===============================================================");
     $display("  STARTING ACCEL_IP_TOP SYSTEM INTEGRATION VERIFICATION");
     $display("===============================================================");
 
-    // -------------------------------------------------------------------------
     // TEST SECTION 1: Cold Boot and Reset State Verification
-    // -------------------------------------------------------------------------
     system_reset();
     axi_master_read(ADDR_STATUS, 32'h0, OKAY, "Verify STATUS register is idle post-reset", 1'b0);
 
-    // -------------------------------------------------------------------------
     // TEST SECTION 2: Sub-System Configuration & Boundary Tests
-    // -------------------------------------------------------------------------
     $display("\n--- Sub-System Configuration Phase ---");
     axi_master_write(ADDR_BASE_ADDR,   32'h00000000, OKAY, "Configure SRAM Base Allocation (Addr 0)");
     axi_master_write(ADDR_MATRIX_SIZE, 32'h00000003, OKAY, "Configure Array Dimension Setting (4x4)");
@@ -230,9 +214,7 @@ module tb_accel_ip_top;
     // Attempting write access to Read-Only Status Space (Checks SLVERR trapping)
     axi_master_write(ADDR_STATUS, 32'hFFFFFFFF, SLVERR, "Trap malicious write attempt to RO Status Register");
 
-    // -------------------------------------------------------------------------
     // TEST SECTION 3: Backdoor Memory Preloading
-    // -------------------------------------------------------------------------
     $display("\n--- Preloading SRAM Data via Testbench Backdoor ---");
     // Preload addresses 0-3 with dummy activation/weight data (e.g., 01, 02, etc.)
     sram_backdoor_write(10'd0, 64'h01010101_01010101);
@@ -242,9 +224,7 @@ module tb_accel_ip_top;
     // Clear out address 4, where the FSM is hardcoded to write the final result back
     sram_backdoor_write(10'd4, 64'h00000000_00000000); 
 
-    // -------------------------------------------------------------------------
     // TEST SECTION 4: End-to-End Execution Sequence
-    // -------------------------------------------------------------------------
     $display("\n--- Launching Full Array Execution Loop ---");
     
     // Assert Execution Token (START = 0x01)
@@ -271,9 +251,7 @@ module tb_accel_ip_top;
       error_count = error_count + 1;
     end
 
-    // -------------------------------------------------------------------------
     // TEST SECTION 5: Memory Writeback Validation (Result Checking)
-    // -------------------------------------------------------------------------
     $display("\n--- Verifying SRAM Result Writeback via Backdoor ---");
     // FSM writes to (Base Addr + 4) -> So we check dut.i_sram.sram_mem[4]
     test_count = test_count + 1;
@@ -285,16 +263,12 @@ module tb_accel_ip_top;
       error_count = error_count + 1;
     end
 
-    // -------------------------------------------------------------------------
     // TEST SECTION 6: Post-Execution Cleanup (Clear Strobe)
-    // -------------------------------------------------------------------------
     $display("\n--- System Reset-Strobe Operations Test ---");
     axi_master_write(ADDR_CTRL, 32'h00000004, OKAY, "Assert Register Clear Command [CLEAR=0x04]");
     axi_master_read(ADDR_STATUS, 32'h0, OKAY, "Verify STATUS dropped back to IDLE (0)", 1'b0);
 
-    // ===========================================================================
     // 7. Simulation Summary Report
-    // ===========================================================================
     $display("\n===============================================================");
     $display("  TOP-LEVEL SYSTEM VERIFICATION PHASE COMPLETED");
     if (error_count == 0)

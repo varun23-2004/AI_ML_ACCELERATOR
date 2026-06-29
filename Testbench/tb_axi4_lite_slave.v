@@ -130,7 +130,7 @@ module tb_axi4_lite_slave;
       axi_bready <= 1'b0;
     end
   endtask
-  // --- MODIFIED: AXI Read Task with Self-Checking ---
+  // AXI Read Task with Self-Checking ---
   task axi_read;
     input [15:0] addr;
     input [31:0] expected_data;
@@ -195,9 +195,7 @@ module tb_axi4_lite_slave;
     #20;
     rst_n = 1;
     
-    // -----------------------------
     // WRITE OPERATIONS
-    // -----------------------------
     $display("---Starting Write Operation----");
     // CTRL Register
     axi_write(16'h0000, 32'h00000001, 2'b00);
@@ -208,11 +206,8 @@ module tb_axi4_lite_slave;
     // MODE Register
     axi_write(16'h000C, 32'h00000001, 2'b00);
 
-    // -----------------------------
     // READ OPERATIONS (Self-Checking)
-    // -----------------------------
     $display("--- Starting Read Verifications ---");
-    
     // Config Registers (Expecting 2'b00 OKAY response)
     axi_read(16'h0000, 32'h00000001, 2'b00);
     axi_read(16'h0004, 32'h00001000, 2'b00);
@@ -229,7 +224,7 @@ module tb_axi4_lite_slave;
     // Invalid Address Test (Expecting 32'h0 and 2'b10 SLVERR response)
     axi_read(16'h0020, 32'h00000000, 2'b10);
 
-    // --- NEW: Test Summary ---
+    //Test Summary ---
     #50;
     $display("\n===============================================================");
     if (error_count == 0)

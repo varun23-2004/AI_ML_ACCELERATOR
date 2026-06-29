@@ -2,9 +2,7 @@
 
 module tb_sram_controller;
 
-  // ===========================================================================
   // Signal Declarations
-  // ===========================================================================
   reg          clk;
   reg          rst_n;
 
@@ -32,9 +30,7 @@ module tb_sram_controller;
   // "Golden Model" Memory Array (Used to track randomized expected values)
   reg  [63:0]  expected_mem [0:511];
 
-  // ===========================================================================
   // Device Under Test (DUT) Instantiation
-  // ===========================================================================
   sram_controller dut (
     .clk        (clk),
     .rst_n      (rst_n),
@@ -47,17 +43,13 @@ module tb_sram_controller;
     .sram_valid (sram_valid)
   );
 
-  // ===========================================================================
   // Clock Generation (100MHz)
-  // ===========================================================================
   initial begin
     clk = 0;
     forever #5 clk = ~clk;
   end
 
-  // ===========================================================================
   // Verification Tasks (Bus Functional Models)
-  // ===========================================================================
 
   // Task: Hardware Reset
   task apply_reset;
@@ -135,18 +127,13 @@ module tb_sram_controller;
     end
   endtask
 
-
-  // ===========================================================================
   // Main Test Sequence
-  // ===========================================================================
   initial begin
     $display("===============================================================");
     $display("  STARTING SRAM CONTROLLER VERIFICATION");
     $display("===============================================================");
 
-    // -------------------------------------------------------------------------
     // 1. Reset Initialization Check
-    // -------------------------------------------------------------------------
     apply_reset();
     #1; // Delta delay
     test_count = test_count + 1;
@@ -157,16 +144,12 @@ module tb_sram_controller;
       $display("[PASS] Reset State Verification | SRAM is Ready");
     end
 
-    // -------------------------------------------------------------------------
     // 2. Basic Single Write and Read
-    // -------------------------------------------------------------------------
     $display("\n--- Testing Single Write/Read Execution ---");
     sram_write(10'h00A, 64'hDEADBEEF_CAFEBA00, "Basic Single Write");
     sram_read_and_check(10'h00A, 64'hDEADBEEF_CAFEBA00, "Basic Single Read");
 
-    // -------------------------------------------------------------------------
     // 3. Back-to-Back Write Execution
-    // -------------------------------------------------------------------------
     $display("\n--- Testing Back-to-Back Writes ---");
     sram_write(10'h001, 64'h11111111_11111111, "B2B Write 1");
     sram_write(10'h002, 64'h22222222_22222222, "B2B Write 2");
@@ -176,9 +159,7 @@ module tb_sram_controller;
     sram_read_and_check(10'h002, 64'h22222222_22222222, "Verify B2B Addr 2");
     sram_read_and_check(10'h003, 64'h33333333_33333333, "Verify B2B Addr 3");
 
-    // -------------------------------------------------------------------------
     // 4. Latency / Busy Handshake Timing Check
-    // -------------------------------------------------------------------------
     $display("\n--- Testing 2-Cycle Latency Handshake Mechanism ---");
     // We initiate a read and check if sram_ready drops immediately to block new requests
     wait(sram_ready);
@@ -187,7 +168,7 @@ module tb_sram_controller;
     sram_we   <= 1'b0;
     sram_addr <= 10'h001;
     
-    @(posedge clk); // Cycle N+1: sram_ready should now be 0 (busy)
+    @(posedge clk);
     sram_req <= 1'b0;
     #1;
     test_count = test_count + 1;
@@ -201,19 +182,15 @@ module tb_sram_controller;
     // Wait for it to finish and valid to assert
     while (!sram_valid) @(posedge clk);
 
-    // -------------------------------------------------------------------------
     // 5. Randomized Fuzz Testing with Golden Model Verification
-    // -------------------------------------------------------------------------
     $display("\n--- Testing Randomized Write/Read Fuzzing ---");
     // Generate 50 random writes across random addresses
     for (i = 0; i < 50; i = i + 1) begin
  
       rand_addr = $random % 512;
       rand_data = { $random, $random }; // Concatenate two 32-bit randoms
-      
       // Store in golden model for later verification
       expected_mem[rand_addr] = rand_data;
-      
       // Write to actual hardware
       sram_write(rand_addr, rand_data, "Fuzz Write Phase");
     end
@@ -227,9 +204,7 @@ module tb_sram_controller;
       end
     end
 
-    // -------------------------------------------------------------------------
     // Test Summary
-    // -------------------------------------------------------------------------
     $display("\n===============================================================");
     $display("  TESTBENCH EXECUTION COMPLETE");
     if (error_count == 0)

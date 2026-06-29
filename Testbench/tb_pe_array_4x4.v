@@ -2,9 +2,7 @@
 
 module tb_pe_array_4x4;
 
-  // ===========================================================================
   // Signal Declarations
-  // ===========================================================================
   reg          clk;
   reg          rst_n;
 
@@ -28,9 +26,7 @@ module tb_pe_array_4x4;
   // Previous State Tracking (for stall tests)
   reg  [63:0]  prev_result_out;
 
-  // ===========================================================================
   // Device Under Test (DUT)
-  // ===========================================================================
   pe_array_4x4 dut (
     .clk            (clk),
     .rst_n          (rst_n),
@@ -44,17 +40,13 @@ module tb_pe_array_4x4;
     .overflow_flags (overflow_flags)
   );
 
-  // ===========================================================================
   // Clock Generation (100MHz)
-  // ===========================================================================
   initial begin
     clk = 0;
     forever #5 clk = ~clk;
   end
 
-  // ===========================================================================
   // Verification Tasks
-  // ===========================================================================
 
   // Task: Hardware Reset
   task apply_reset;
@@ -78,7 +70,7 @@ module tb_pe_array_4x4;
     input condition;
     input [319:0] test_name;
     begin
-      #1; // Delta cycle delay to allow hardware to settle
+      #1; // Delay to let hardware settle
       test_count = test_count + 1;
       if (condition) begin
         $display("[PASS] %s", test_name);
@@ -89,23 +81,17 @@ module tb_pe_array_4x4;
     end
   endtask
 
-  // ===========================================================================
   // Main Test Sequence
-  // ===========================================================================
   initial begin
     $display("===============================================================");
     $display("  STARTING PE ARRAY 4x4 VERIFICATION");
     $display("===============================================================");
 
-    // -------------------------------------------------------------------------
     // 1. Reset Initialization Check
-    // -------------------------------------------------------------------------
     apply_reset();
     check_condition((result_out == 64'h0) && (overflow_flags == 4'b0), "Hardware outputs zeroed post-reset");
 
-    // -------------------------------------------------------------------------
     // 2. Data Propagation & Truncation Check
-    // -------------------------------------------------------------------------
     $display("\n--- Testing Low-Value Pipeline Propagation ---");
     // We drive small values (1). Since 1*1 = 1, and the PE truncates the output
     // by shifting right 4 bits (accum[19:4]), the output will be 0. 
@@ -118,9 +104,7 @@ module tb_pe_array_4x4;
     for (i = 0; i < 12; i = i + 1) @(posedge clk);
     check_condition((result_out == 64'h0), "Low-value truncation correctly drops to 0 across array");
 
-    // -------------------------------------------------------------------------
     // 3. Saturation & Overflow Stress Test
-    // -------------------------------------------------------------------------
     $display("\n--- Testing High-Value Cascading & Saturation ---");
     // Drive max values to rapidly fill the accumulators and force overflows
     activation_in = 32'hFFFFFFFF;
@@ -132,9 +116,7 @@ module tb_pe_array_4x4;
     check_condition((overflow_flags !== 4'b0000), "Overflow flags successfully triggered under heavy load");
     check_condition((result_out !== 64'h0), "Result out contains saturated data");
 
-    // -------------------------------------------------------------------------
     // 4. Array Stall Test (Backpressure handling)
-    // -------------------------------------------------------------------------
     $display("\n--- Testing Array Stall (pe_en = 0) ---");
     
     // De-assert enable to hit the brakes
@@ -150,9 +132,7 @@ module tb_pe_array_4x4;
     for (i = 0; i < 5; i = i + 1) @(posedge clk);
     check_condition((result_out == prev_result_out), "Array successfully stalled, outputs held steady");
 
-    // -------------------------------------------------------------------------
     // 5. Synchronous Global Clear Test
-    // -------------------------------------------------------------------------
     $display("\n--- Testing Synchronous Accumulator Clear ---");
     clear_acc = 1'b1;
     @(posedge clk);
@@ -162,9 +142,7 @@ module tb_pe_array_4x4;
     @(posedge clk);
     check_condition((result_out == 64'h0) && (overflow_flags == 4'b0), "Global clear successfully zeroed all outputs and flags");
 
-    // -------------------------------------------------------------------------
     // Test Summary
-    // -------------------------------------------------------------------------
     $display("\n===============================================================");
     $display("  TESTBENCH EXECUTION COMPLETE");
     if (error_count == 0)
